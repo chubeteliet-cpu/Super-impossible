@@ -1,0 +1,396 @@
+-- Server script: đặt trong ServerScriptService hoặc Workspace (dùng executor có isfile/writefile/getcustomasset)
+local RunService = game:GetService("RunService")
+if not RunService:IsServer() then
+    warn("Chạy trên client? Script này nên chạy server-side.")
+end
+
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+
+-- ---------- helper để tạo / lấy main color correction nếu chưa có ----------
+local Lighting = game:GetService("Lighting")
+local function ensureMainColorCorrection()
+    local cc = Lighting:FindFirstChild("MainColorCorrection")
+    if not cc then
+        cc = Instance.new("ColorCorrectionEffect")
+        cc.Name = "MainColorCorrection"
+        cc.Parent = Lighting
+    end
+    return cc
+end
+
+local cc = ensureMainColorCorrection()
+
+--==================================================
+-- SUPER IMPOSSIBLE CORRUPTED
+-- GREAVE - HIT HUB SOUND
+-- GitHub proximity sound
+--==================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+
+--==================================================
+-- CONFIG
+--==================================================
+
+local ENTITY_NAME = "Greave"
+
+local SOUND_URL =
+	"https://github.com/chubeteliet-cpu/Mode-music/raw/main/%20%20%20%20Greave%20sound.mp3"
+
+local MAX_DISTANCE = 150
+local START_DISTANCE = 120
+
+local MIN_VOLUME =20
+local MAX_VOLUME = 50
+
+local FADE_SPEED = 3
+
+--==================================================
+-- FIND PLAYER ROOT
+--==================================================
+
+local function getPlayerRoot()
+	local character = Player.Character
+	if not character then
+		return nil
+	end
+
+	return character:FindFirstChild("HumanoidRootPart")
+		or character:FindFirstChild("UpperTorso")
+		or character:FindFirstChild("Torso")
+end
+
+--==================================================
+-- FIND ENTITY
+--==================================================
+
+local function getEntity()
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("Model") and obj.Name == ENTITY_NAME then
+			return obj
+		end
+	end
+
+	return nil
+end
+
+--==================================================
+-- GET ENTITY ROOT
+--==================================================
+
+local function getEntityRoot(entity)
+	if not entity then
+		return nil
+	end
+
+	return entity:FindFirstChild("HumanoidRootPart")
+		or entity.PrimaryPart
+		or entity:FindFirstChild("Torso")
+		or entity:FindFirstChildWhichIsA("BasePart")
+end
+
+--==================================================
+-- GITHUB DOWNLOAD
+--==================================================
+
+local function downloadSound()
+	local requestFunction =
+		request
+		or http_request
+		or (syn and syn.request)
+
+	if not requestFunction then
+		warn("[GREAVE] Executor không hỗ trợ request.")
+		return nil
+	end
+
+	local ok, response = pcall(function()
+		return requestFunction({
+			Url = SOUND_URL,
+			Method = "GET"
+		})
+	end)
+
+	if not ok or not response then
+		warn("[GREAVE] Không tải được sound GitHub.")
+		return nil
+	end
+
+	if response.StatusCode and response.StatusCode ~= 200 then
+		warn("[GREAVE] HTTP Error:", response.StatusCode)
+		return nil
+	end
+
+	return response.Body
+end
+
+--==================================================
+-- LOAD SOUND
+--==================================================
+
+local audioData = downloadSound()
+
+if not audioData then
+	warn("[GREAVE] Sound chưa được tải.")
+else
+	print("[GREAVE] Sound GitHub loaded.")
+end
+
+--==================================================
+-- SOUND OBJECT
+--==================================================
+
+local sound = Instance.new("Sound")
+sound.Name = "GreaveHitHub"
+sound.Volume = 0
+sound.Looped = true
+sound.Parent = workspace.CurrentCamera
+
+--==================================================
+-- PLAY SOUND
+--==================================================
+
+local function playSound()
+	if not sound.IsPlaying then
+		pcall(function()
+			sound:Play()
+		end)
+	end
+end
+
+local function stopSound()
+	if sound.IsPlaying then
+		pcall(function()
+			sound:Stop()
+		end)
+	end
+end
+
+--==================================================
+-- PROXIMITY SYSTEM
+--==================================================
+
+local currentVolume = 0
+local entity = nil
+
+RunService.RenderStepped:Connect(function(dt)
+
+	local playerRoot = getPlayerRoot()
+
+	if not playerRoot then
+		currentVolume = 0
+		sound.Volume = 0
+		stopSound()
+		return
+	end
+
+	-- Tìm lại entity nếu entity cũ biến mất
+	if not entity or not entity.Parent then
+		entity = getEntity()
+	end
+
+	local entityRoot = getEntityRoot(entity)
+
+	if not entityRoot then
+
+		currentVolume = math.max(
+			0,
+			currentVolume - FADE_SPEED * dt
+		)
+
+		sound.Volume = currentVolume
+
+		if currentVolume <= 0.01 then
+			stopSound()
+		end
+
+		return
+	end
+
+	--==================================================
+	-- DISTANCE
+	--==================================================
+
+	local distance =
+		(playerRoot.Position - entityRoot.Position).Magnitude
+
+	--==================================================
+	-- TOO FAR
+	--==================================================
+
+	if distance >= MAX_DISTANCE then
+
+		currentVolume = math.max(
+			0,
+			currentVolume - FADE_SPEED * dt
+		)
+
+	else
+
+		--==================================================
+		-- PROXIMITY
+		--==================================================
+
+		local proximity =
+			1 - math.clamp(
+				(distance - 5)
+				/
+				(START_DISTANCE - 5),
+				0,
+				1
+			)
+
+		-- Tăng mạnh khi entity áp sát
+		proximity = proximity ^ 1.8
+
+		local targetVolume =
+			MIN_VOLUME
+			+
+			(MAX_VOLUME - MIN_VOLUME)
+			* proximity
+
+		-- Smooth volume
+		currentVolume =
+			currentVolume
+			+
+			(targetVolume - currentVolume)
+			*
+			math.clamp(
+				FADE_SPEED * dt,
+				0,
+				1
+			)
+
+	end
+
+	--==================================================
+	-- APPLY VOLUME
+	--==================================================
+
+	sound.Volume =
+		math.clamp(
+			currentVolume,
+			0,
+			MAX_VOLUME
+		)
+
+	--==================================================
+	-- PLAY / STOP
+	--==================================================
+
+	if currentVolume > 0.01 then
+		playSound()
+	else
+		stopSound()
+	end
+
+end)
+
+--==================================================
+-- CLEANUP WHEN PLAYER LEAVES
+--==================================================
+
+Players.PlayerRemoving:Connect(function(player)
+	if player == Player then
+		pcall(function()
+			sound:Destroy()
+		end)
+	end
+end)
+
+print("====================================")
+print(" GREAVE HIT HUB LOADED")
+print(" GitHub Sound: Greave sound.mp3")
+print(" Distance: " .. MAX_DISTANCE)
+print(" Max Volume: " .. MAX_VOLUME)
+print("====================================")
+
+-- ---------- lighting effects (an toàn nếu thiếu cc) ----------
+cc.TintColor = Color3.fromRGB(255, 255, 255)
+cc.Contrast = 1
+
+local TweenService = game:GetService("TweenService")
+pcall(function()
+    TweenService:Create(cc, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    TweenService:Create(cc, TweenInfo.new(80), {TintColor = Color3.fromRGB(255,255,255)}):Play()
+end)
+
+-- ---------- random seed ----------
+math.randomseed(tick() + os.time())
+
+-- ---------- random parameters (đảm bảo "spawn ngẫu nhiên" theo preference bạn lưu) ----------
+local randSpeed = math.random(50, 90)          -- speed ngẫu nhiên 50..90
+local randDelay = math.random(1, 3)           -- delay ngẫu nhiên 1..3
+local randHeight = (math.random(-2, 2))       -- height offset -2..2
+local randReboundOn = (math.random(0,1) == 1) -- bật/tắt rebound ngẫu nhiên
+local randReboundMin = math.random(2,4)
+local randReboundMax = randReboundMin + math.random(1,3)
+
+-- ---------- tạo entity với các tham số ngẫu nhiên ----------
+local entity = spawner.Create({
+ Entity = {
+  Name = "Greave",
+  Asset = "12668494075", -- thay nếu cần
+  HeightOffset = randHeight
+ },
+ Lights = {
+  Flicker = { Enabled =true, Duration = 10 },
+  Shatter =false,
+  Repair = false
+ },
+ CameraShake = {
+  Enabled = true,
+  Range = 100,
+  Values = {2, 25, 0.1, 1}
+ },
+ Movement = {
+  Speed = 267,
+  Delay = 5,
+  Reversed = false
+ },
+ Rebounding = {
+  Enabled = randReboundOn,
+  Type = "Ambush",
+  Min = 3,
+  Max = 6,
+  Delay = 2
+ },
+ Damage = {
+  Enabled = true,
+  Range = 90,
+  Amount = 9999
+ },
+ Crucifixion = {
+  Enabled = false,
+  Range = 40,
+  Resist = false,
+  Break = true
+ },
+ Death = {
+  Type = "Guiding",
+  Hints = {""},
+  Cause = "Greave"
+ }
+})
+
+-- ---------- OnDamagePlayer callback: nhận player (server) và set GameStats an toàn ----------
+entity:SetCallback("OnDamagePlayer", function(player, newHealth)
+    -- player có thể là Player instance — kiểm tra an toàn
+    if typeof(player) ~= "Instance" or not player:IsA("Player") then return end
+
+    pcall(function()
+        local ReSt = game:GetService("ReplicatedStorage")
+        if ReSt and ReSt:FindFirstChild("GameStats") then
+            local stats = ReSt.GameStats:FindFirstChild("Player_"..player.Name)
+            if stats and stats:FindFirstChild("Total") and stats.Total:FindFirstChild("DeathCause") then
+                stats.Total.DeathCause.Value = "Greave"
+            end
+        end
+    end)
+end)
+
+-- ---------- chạy entity ----------
+entity:Run()
