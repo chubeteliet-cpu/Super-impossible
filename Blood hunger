@@ -1,0 +1,193 @@
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+_G.baseval = 6
+local damages = true
+
+local function getGitSoundId(url, name)
+    local ok, res = pcall(function()
+        if type(isfile) == "function"
+            and type(writefile) == "function"
+            and type(getcustomasset) == "function" then
+
+            if not isfile(name .. ".mp3") then
+                writefile(name .. ".mp3", game:HttpGet(url))
+            end
+
+            return getcustomasset(name .. ".mp3")
+        end
+
+        return nil
+    end)
+
+    if ok and res then
+        return res
+    end
+
+    return nil
+end
+
+-- ---------- tạo model và đặt vị trí ----------
+local model = game:GetObjects("rbxassetid://136064945135625")[1]
+if not model then return end
+
+model.Parent = workspace
+
+local mainPart = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+model.PrimaryPart = mainPart
+
+-- ---------- tìm room hiện tại ----------
+local roomsFolder =
+    workspace:FindFirstChild("CurrentRooms")
+    or workspace:WaitForChild("CurrentRooms", 10)
+
+local rooms = {}
+
+if roomsFolder then
+    rooms = roomsFolder:GetChildren()
+end
+
+local room = rooms[#rooms - 1]
+
+if room and mainPart then
+    local floor = room:FindFirstChild("Parts")
+        and room.Parts:FindFirstChild("Floor")
+
+    if floor then
+        model:SetPrimaryPartCFrame(
+            floor.CFrame + Vector3.new(0, 6, 0)
+        )
+    else
+        model:SetPrimaryPartCFrame(CFrame.new(0, 5, 0))
+    end
+elseif mainPart then
+    model:SetPrimaryPartCFrame(CFrame.new(0, 5, 0))
+end
+
+-- ---------- light tween ----------
+local light = model:FindFirstChild("Light", true)
+
+if light and light:IsA("PointLight") or light and light:IsA("SpotLight") or light and light:IsA("SurfaceLight") then
+    light.Range = 0
+
+    local anim = TweenService:Create(
+        light,
+        TweenInfo.new(1),
+        {Range = 21}
+    )
+
+    anim:Play()
+end
+
+-- ---------- sound ----------
+local SOUND_URL =
+    "https://github.com/chubeteliet-cpu/Mode-music/raw/main/IMG_0217.mp3"
+
+local spawnSound = Instance.new("Sound")
+spawnSound.Name = "SpawnSound"
+spawnSound.Volume = 2
+spawnSound.Looped = false
+
+local loadedId = getGitSoundId(
+    SOUND_URL,
+    "IMG_0217_spawn_sound"
+)
+
+if loadedId then
+    spawnSound.SoundId = loadedId
+end
+
+spawnSound.Parent = mainPart or workspace
+
+pcall(function()
+    if spawnSound.SoundId ~= "" then
+        spawnSound:Play()
+    end
+end)
+
+spawnSound.Ended:Connect(function()
+    if spawnSound and spawnSound.Parent then
+        spawnSound:Destroy()
+    end
+end)
+
+-- ---------- damage loop ----------
+task.spawn(function()
+    while damages do
+        task.wait(0.15)
+
+        local char = player.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+
+        if hum and mainPart then
+            local _, onscreen =
+                camera:WorldToViewportPoint(mainPart.Position)
+
+            if not onscreen and hum.Sit == false then
+                pcall(function()
+                    hum:TakeDamage(hum.MaxHealth * 0.03)
+                end)
+            end
+
+            if hum.Health <= 0 then
+                pcall(function()
+                    firesignal(
+                        game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent,
+                        {
+                            "You died to hunger",
+                            "If you see him don't look away",
+                            "You should keep looking at him"
+                        },
+                        "Blue"
+                    )
+                end)
+
+                pcall(function()
+                    local gs =
+                        game.ReplicatedStorage:FindFirstChild("GameStats")
+
+                    local stats =
+                        gs and gs:FindFirstChild("Player_" .. player.Name)
+
+                    local total =
+                        stats and stats:FindFirstChild("Total")
+
+                    local deathCause =
+                        total and total:FindFirstChild("DeathCause")
+
+                    if deathCause then
+                        deathCause.Value = "hunger"
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+-- ---------- cleanup khi sang room mới ----------
+local currentRooms =
+    workspace:FindFirstChild("CurrentRooms")
+    or workspace:WaitForChild("CurrentRooms", 10)
+
+if currentRooms then
+    currentRooms.ChildAdded:Connect(function()
+        damages = false
+        _G.baseval = -2
+
+        task.wait(2)
+
+        if model and model.Parent then
+            model:Destroy()
+        end
+    end)
+else
+    task.delay(20, function()
+        damages = false
+        _G.baseval = -2
+
+        if model and model.Parent then
+            model:Destroy()
+        end
+    end)
+end
