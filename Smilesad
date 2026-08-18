@@ -1,0 +1,73 @@
+-- Server script: đặt trong ServerScriptService hoặc Workspace (dùng executor có isfile/writefile/getcustomasset)
+local RunService = game:GetService("RunService")
+if not RunService:IsServer() then
+    warn("Chạy trên client? Script này nên chạy server-side.")
+end
+
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+
+
+local entity = spawner.Create({
+ Entity = {
+  Name = "SORROW",
+  Asset = "127369759928019", -- thay nếu cần
+  HeightOffset = randHeight
+ },
+ Lights = {
+  Flicker = { Enabled =true, Duration = 13 },
+  Shatter =false,
+  Repair = false
+ },
+ CameraShake = {
+  Enabled = true,
+  Range = 100,
+  Values = {2, 25, 0.1, 1}
+ },
+ Movement = {
+  Speed = 267,
+  Delay = 15,
+  Reversed = false
+ },
+ Rebounding = {
+  Enabled = randReboundOn,
+  Type = "Ambush",
+  Min = 9,
+  Max = 13,
+  Delay =1
+ },
+ Damage = {
+  Enabled = true,
+  Range = 90,
+  Amount = 9999
+ },
+ Crucifixion = {
+  Enabled = false,
+  Range = 40,
+  Resist = false,
+  Break = true
+ },
+ Death = {
+  Type = "Guiding",
+  Hints = {"smiler but he sad:("},
+  Cause = "SORROW"
+ }
+})
+
+-- ---------- OnDamagePlayer callback: nhận player (server) và set GameStats an toàn ----------
+entity:SetCallback("OnDamagePlayer", function(player, newHealth)
+    -- player có thể là Player instance — kiểm tra an toàn
+    if typeof(player) ~= "Instance" or not player:IsA("Player") then return end
+
+    pcall(function()
+        local ReSt = game:GetService("ReplicatedStorage")
+        if ReSt and ReSt:FindFirstChild("GameStats") then
+            local stats = ReSt.GameStats:FindFirstChild("Player_"..player.Name)
+            if stats and stats:FindFirstChild("Total") and stats.Total:FindFirstChild("DeathCause") then
+                stats.Total.DeathCause.Value = "SORROW"
+            end
+        end
+    end)
+end)
+
+-- ---------- chạy entity ----------
+entity:Run()
