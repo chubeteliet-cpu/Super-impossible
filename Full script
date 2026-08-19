@@ -1,0 +1,1792 @@
+--============================================================
+-- SUPER IMPOSSIBLE: CORRUPTED — DELTA EDITION
+-- FULL FIXED BUILD
+--
+-- Spawn bắt đầu từ Room 8
+-- Mỗi lần spawn cách nhau ngẫu nhiên 3-7 room
+-- Random entity
+-- Không lặp entity vừa spawn
+-- Tối đa 3 entity hoạt động
+--============================================================
+
+-- ===== Services =====
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+
+math.randomseed(os.time() + math.floor(os.clock() * 100000))
+
+--============================================================
+-- LOG
+--============================================================
+
+local function log(...)
+	print("[SUPER IMPOSSIBLE: CORRUPTED]", ...)
+end
+
+local function warnLog(...)
+	warn("[SUPER IMPOSSIBLE: CORRUPTED]", ...)
+end
+
+--============================================================
+-- SAFE WAIT
+--============================================================
+
+local function waitFor(cond, timeout, step)
+	timeout = timeout or 8
+	step = step or 0.12
+
+	local t = 0
+
+	while t < timeout do
+		local ok, result = pcall(cond)
+
+		if ok and result then
+			return true
+		end
+
+		task.wait(step)
+		t += step
+	end
+
+	local ok, result = pcall(cond)
+	return ok and result == true
+end
+
+--============================================================
+-- INTRO IMAGE
+--============================================================
+
+do
+	if LocalPlayer then
+		local playerGui =
+			LocalPlayer:WaitForChild("PlayerGui", 8)
+
+		if playerGui then
+			local gui =
+				Instance.new("ScreenGui")
+
+			gui.Name =
+				"SUPER_IMPOSSIBLE_INTRO"
+
+			gui.IgnoreGuiInset = true
+			gui.ResetOnSpawn = false
+			gui.DisplayOrder = 999999
+			gui.Parent = playerGui
+
+			local image =
+				Instance.new("ImageLabel")
+
+			image.Parent = gui
+			image.BackgroundTransparency = 1
+
+			image.Size =
+				UDim2.new(1, 0, 1, 0)
+
+			image.Position =
+				UDim2.new(0, 0, 0, 0)
+
+			image.Image =
+				"rbxassetid://124312979460897"
+
+			image.ImageTransparency = 0
+			image.ScaleType =
+				Enum.ScaleType.Stretch
+
+			task.wait(8)
+
+			local tween =
+				TweenService:Create(
+					image,
+					TweenInfo.new(
+						2,
+						Enum.EasingStyle.Linear
+					),
+					{
+						ImageTransparency = 1
+					}
+				)
+
+			tween:Play()
+			tween.Completed:Wait()
+
+			gui:Destroy()
+		end
+	end
+end
+
+--============================================================
+-- ACHIEVEMENT
+--============================================================
+
+do
+	pcall(function()
+
+		local achievementSource =
+			game:HttpGet(
+				"https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua",
+				true
+			)
+
+		local achievementGiver =
+			loadstring(achievementSource)
+
+		if type(achievementGiver) == "function" then
+
+			local giver =
+				achievementGiver()
+
+			if type(giver) == "function" then
+
+				giver({
+					Title = "excute the script",
+					Desc = "script by chú bé tê liệt",
+					Reason = "thank to use",
+					Image =
+						"rbxassetid://124312979460897"
+				})
+
+			end
+		end
+	end)
+end
+
+--============================================================
+-- CAPTION FALLBACK
+--============================================================
+
+local function showFallbackCaption(
+	text,
+	dur
+)
+
+	dur = dur or 4
+
+	if not LocalPlayer then
+		return
+	end
+
+	local playerGui =
+		LocalPlayer:FindFirstChild(
+			"PlayerGui"
+		)
+
+	if not playerGui then
+
+		if not waitFor(
+			function()
+				return LocalPlayer
+					and LocalPlayer:FindFirstChild(
+						"PlayerGui"
+					)
+			end,
+			6,
+			0.08
+		) then
+			return
+		end
+
+		playerGui =
+			LocalPlayer:FindFirstChild(
+				"PlayerGui"
+			)
+	end
+
+	if not playerGui then
+		return
+	end
+
+	pcall(function()
+
+		local gui =
+			Instance.new("ScreenGui")
+
+		gui.Name =
+			"OD_CAP_FALLBACK_" ..
+			tostring(
+				math.random(
+					100000,
+					999999
+				)
+			)
+
+		gui.ResetOnSpawn = false
+		gui.DisplayOrder = 999998
+		gui.Parent = playerGui
+
+		local lbl =
+			Instance.new("TextLabel")
+
+		lbl.Parent = gui
+
+		lbl.Size =
+			UDim2.new(
+				0.9,
+				0,
+				0.08,
+				0
+			)
+
+		lbl.Position =
+			UDim2.new(
+				0.05,
+				0,
+				0.88,
+				0
+			)
+
+		lbl.BackgroundTransparency = 1
+		lbl.TextScaled = true
+		lbl.Font =
+			Enum.Font.GothamBold
+
+		lbl.TextColor3 =
+			Color3.fromRGB(
+				170,
+				255,
+				200
+			)
+
+		lbl.TextStrokeTransparency = 0.6
+		lbl.Text = tostring(text)
+
+		Debris:AddItem(
+			gui,
+			dur
+		)
+
+	end)
+end
+
+--============================================================
+-- FIND MAIN GAME
+--============================================================
+
+local function getMainGameModuleDelta()
+
+	if not LocalPlayer then
+		return nil
+	end
+
+	pcall(function()
+
+		LocalPlayer:WaitForChild(
+			"PlayerGui",
+			8
+		)
+
+	end)
+
+	local pg =
+		LocalPlayer:FindFirstChild(
+			"PlayerGui"
+		)
+
+	if not pg then
+		return nil
+	end
+
+	local mainui =
+		pg:FindFirstChild("MainUI")
+		or pg:FindFirstChild("Main")
+		or pg:FindFirstChild("InGameUI")
+
+	if not mainui then
+		return nil
+	end
+
+	local initiator =
+		mainui:FindFirstChild(
+			"Initiator"
+		)
+		or mainui
+
+	local mg =
+		initiator:FindFirstChild(
+			"Main_Game"
+		)
+		or mainui:FindFirstChild(
+			"Main_Game"
+		)
+
+	if mg
+		and mg:IsA("ModuleScript")
+	then
+
+		local ok, mod =
+			pcall(require, mg)
+
+		if ok
+			and type(mod) == "table"
+			and type(mod.caption) == "function"
+		then
+			return mod
+		end
+	end
+
+	for _, desc in ipairs(
+		mainui:GetDescendants()
+	) do
+
+		if desc:IsA("ModuleScript")
+			and tostring(desc.Name)
+				:lower()
+				:find(
+					"main_game",
+					1,
+					true
+				)
+		then
+
+			local ok, mod =
+				pcall(require, desc)
+
+			if ok
+				and type(mod) == "table"
+				and type(mod.caption) == "function"
+			then
+				return mod
+			end
+		end
+	end
+
+	return nil
+end
+
+--============================================================
+-- CAPTION SYSTEM
+--============================================================
+
+task.spawn(function()
+
+	task.wait(0.18)
+
+	local MainGame =
+		getMainGameModuleDelta()
+
+	if MainGame
+		and type(MainGame.caption)
+			== "function"
+	then
+
+		pcall(function()
+
+			MainGame.caption(
+				"SUPER IMPOSSIBLE: CORRUPTED by chú bé tê liệt",
+				true
+			)
+
+		end)
+
+		task.wait(3)
+
+		local cr =
+			Workspace:FindFirstChild(
+				"CurrentRooms"
+			)
+			or Workspace:FindFirstChild(
+				"Current_RoomS"
+			)
+			or Workspace:FindFirstChild(
+				"Current_Rooms"
+			)
+			or Workspace:FindFirstChild(
+				"Rooms"
+			)
+
+		local function handleRoom(
+			roomNumber
+		)
+
+			local rn =
+				tonumber(roomNumber)
+
+			if rn == 1
+				or rn == 2
+			then
+
+				task.wait(0.12)
+
+				pcall(function()
+
+					MainGame.caption(
+						"good luck",
+						true
+					)
+
+				end)
+			end
+		end
+
+		if cr
+			and cr:IsA("Folder")
+		then
+
+			for _, room in ipairs(
+				cr:GetChildren()
+			) do
+
+				handleRoom(
+					room.Name
+				)
+
+			end
+
+			cr.ChildAdded:Connect(
+				function(room)
+
+					handleRoom(
+						room.Name
+					)
+
+				end
+			)
+
+		else
+
+			local gameData =
+				RS:FindFirstChild(
+					"GameData"
+				)
+
+			local latestRoom =
+				gameData
+				and gameData:FindFirstChild(
+					"LatestRoom"
+				)
+
+			if latestRoom then
+
+				handleRoom(
+					latestRoom.Value
+				)
+
+				latestRoom.Changed:Connect(
+					function(v)
+
+						handleRoom(v)
+
+					end
+				)
+			end
+		end
+
+	else
+
+		showFallbackCaption(
+			"SUPER IMPOSSIBLE: CORRUPTED by chú bé tê liệt",
+			6
+		)
+
+		local gameData =
+			RS:FindFirstChild(
+				"GameData"
+			)
+
+		local latestRoom =
+			gameData
+			and gameData:FindFirstChild(
+				"LatestRoom"
+			)
+
+		if latestRoom then
+
+			local current =
+				tonumber(
+					latestRoom.Value
+				)
+
+			if current == 1
+				or current == 2
+			then
+
+				task.wait(0.12)
+
+				showFallbackCaption(
+					"good luck",
+					4
+				)
+			end
+
+			latestRoom.Changed:Connect(
+				function(v)
+
+					local rn =
+						tonumber(v)
+
+					if rn == 1
+						or rn == 2
+					then
+
+						task.wait(0.12)
+
+						showFallbackCaption(
+							"good luck",
+							4
+						)
+					end
+				end
+			)
+		end
+	end
+end)
+
+--============================================================
+-- BLACK FOG
+--============================================================
+
+do
+
+	local targetColor =
+		Color3.fromRGB(
+			0,
+			0,
+			0
+		)
+
+	local targetAmbient =
+		Color3.fromRGB(
+			10,
+			10,
+			10
+		)
+
+	local endFog = 80
+
+	task.spawn(function()
+
+		task.wait(0.08)
+
+		pcall(function()
+
+			local startColor =
+				Lighting.FogColor
+
+			local startAmbient =
+				Lighting.Ambient
+
+			local startBrightness =
+				Lighting.Brightness
+
+			local steps = 10
+
+			for i = 1, steps do
+
+				local t =
+					i / steps
+
+				Lighting.FogColor =
+					startColor:Lerp(
+						targetColor,
+						t
+					)
+
+				Lighting.Ambient =
+					startAmbient:Lerp(
+						targetAmbient,
+						t
+					)
+
+				Lighting.FogStart = 0
+
+				Lighting.FogEnd =
+					endFog * t
+
+				Lighting.Brightness =
+					startBrightness *
+					(
+						1 -
+						0.06 * t
+					)
+
+				task.wait(0.07)
+			end
+
+			Lighting.FogColor =
+				targetColor
+
+			Lighting.FogStart = 0
+			Lighting.FogEnd = endFog
+
+			Lighting.Ambient =
+				targetAmbient
+
+		end)
+	end)
+end
+
+--============================================================
+-- ENTITY LIST
+--============================================================
+
+local ENTITY_URLS = {
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Impossible-mode/refs/heads/main/Nightmare%20rush",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Impossible-mode/refs/heads/main/Wh1t3",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Super-impossible/refs/heads/main/Shocker",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Super-impossible/refs/heads/main/Green%20rush",
+
+	"https://github.com/PABMAXICHAC/doors-monsters-scripts/raw/main/blinkcrux",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Impossible-mode/refs/heads/main/Smiler-v2",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Super-impossible/refs/heads/main/Blood%20hunger",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Super-impossible/refs/heads/main/Green%20ceasy",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Super-impossible/refs/heads/main/Smilesad",
+
+	"https://raw.githubusercontent.com/chubeteliet-cpu/Super-impossible/refs/heads/main/A60",
+
+	"https://raw.githubusercontent.com/Junbbinopro/Depth-entity/refs/heads/main/Depth",
+
+	"https://raw.githubusercontent.com/Junbbinopro/Black-smile/refs/heads/main/Black"
+}
+
+--============================================================
+-- SPAWN CONFIG
+--============================================================
+
+local START_ROOM = 8
+
+local MIN_ROOM_GAP = 3
+local MAX_ROOM_GAP = 7
+
+local MAX_ACTIVE_ENTITIES = 3
+
+local GLOBAL_SPAWN_COOLDOWN = 30
+
+local PER_ENTITY_COOLDOWN = 60
+
+--============================================================
+-- ENTITY TRACKING
+--============================================================
+
+local ActiveEntityCount = 0
+
+local ModelToSource = {}
+
+local RecentSpawnAttempts = {}
+
+local PerURLLastSuccess = {}
+
+local LastSpawnedURL = nil
+
+local LastSpawnedName = nil
+
+--============================================================
+-- ENTITY NAME DETECTION
+--============================================================
+
+local function isEntityLikeName(
+	name
+)
+
+	if not name then
+		return false
+	end
+
+	local s =
+		tostring(name):lower()
+
+	local patterns = {
+
+		"repentance",
+		"seek",
+		"rush",
+		"ambush",
+		"smiler",
+		"silence",
+		"ripper",
+		"rebound",
+		"a60",
+		"nightmare",
+		"wh1t3",
+		"hunger",
+		"blink",
+		"cease",
+		"shock",
+		"green",
+		"black",
+		"smile",
+		"entity",
+		"monster",
+		"depth"
+	}
+
+	for _, pattern in ipairs(
+		patterns
+	) do
+
+		if s:find(
+			pattern,
+			1,
+			true
+		) then
+
+			return true
+		end
+	end
+
+	return false
+end
+
+--============================================================
+-- COUNT TRACKED ENTITIES
+--============================================================
+
+local function countTrackedEntities()
+
+	local count = 0
+
+	for model in pairs(
+		ModelToSource
+	) do
+
+		if model
+			and model.Parent
+		then
+
+			count += 1
+
+		else
+
+			ModelToSource[model] =
+				nil
+
+		end
+	end
+
+	return count
+end
+
+--============================================================
+-- TRACK NEW ENTITY
+--============================================================
+
+Workspace.DescendantAdded:Connect(
+	function(desc)
+
+		if not desc
+			or not desc:IsA("Model")
+		then
+			return
+		end
+
+		if desc:GetAttribute(
+			"OD_TRACKED"
+		) then
+			return
+		end
+
+		if not isEntityLikeName(
+			desc.Name
+		) then
+			return
+		end
+
+		desc:SetAttribute(
+			"OD_TRACKED",
+			true
+		)
+
+		ModelToSource[desc] =
+			"external"
+
+		local now = tick()
+
+		for i =
+			#RecentSpawnAttempts,
+			1,
+			-1
+		do
+
+			local attempt =
+				RecentSpawnAttempts[i]
+
+			if not attempt
+				or (
+					now -
+					attempt.time
+				) > 6
+			then
+
+				table.remove(
+					RecentSpawnAttempts,
+					i
+				)
+
+			elseif not attempt.matched then
+
+				attempt.matched = true
+
+				ModelToSource[desc] =
+					attempt.url
+
+				if attempt.url then
+
+					PerURLLastSuccess[
+						attempt.url
+					] = now
+
+				end
+
+				break
+			end
+		end
+
+		ActiveEntityCount =
+			countTrackedEntities()
+
+		local connection
+
+		connection =
+			desc.AncestryChanged:Connect(
+				function(_, parent)
+
+					if parent then
+						return
+					end
+
+					if connection then
+
+						pcall(function()
+
+							connection:Disconnect()
+
+						end)
+
+					end
+
+					ModelToSource[desc] =
+						nil
+
+					ActiveEntityCount =
+						countTrackedEntities()
+
+				end
+			)
+	end
+)
+
+--============================================================
+-- PERIODIC TRACK CLEANUP
+--============================================================
+
+task.spawn(function()
+
+	while true do
+
+		task.wait(5)
+
+		ActiveEntityCount =
+			countTrackedEntities()
+
+	end
+end)
+
+--============================================================
+-- GET CURRENT ROOM
+--============================================================
+
+local function getCurrentRoomNumber()
+
+	local gameData =
+		RS:FindFirstChild(
+			"GameData"
+		)
+
+	local latestRoom =
+		gameData
+		and gameData:FindFirstChild(
+			"LatestRoom"
+		)
+
+	if latestRoom then
+
+		local value =
+			tonumber(
+				latestRoom.Value
+			)
+
+		if value then
+			return value
+		end
+	end
+
+	local currentRooms =
+		Workspace:FindFirstChild(
+			"CurrentRooms"
+		)
+
+	if currentRooms then
+
+		local highest = nil
+
+		for _, room in ipairs(
+			currentRooms:GetChildren()
+		) do
+
+			local n =
+				tonumber(room.Name)
+
+			if n
+				and (
+					not highest
+					or n > highest
+				)
+			then
+
+				highest = n
+
+			end
+		end
+
+		return highest
+	end
+
+	return nil
+end
+
+--============================================================
+-- PLACEHOLDER
+--============================================================
+
+local function spawnPlaceholder(
+	roomIndex
+)
+
+	local mdl =
+		Instance.new("Model")
+
+	mdl.Name =
+		"OD_PLACEHOLDER_ENTITY"
+
+	mdl:SetAttribute(
+		"OD_PLACEHOLDER",
+		true
+	)
+
+	local p =
+		Instance.new("Part")
+
+	p.Name = "Entity"
+
+	p.Size =
+		Vector3.new(
+			2,
+			4,
+			1
+		)
+
+	p.Anchored = true
+	p.CanCollide = false
+
+	p.Material =
+		Enum.Material.Neon
+
+	p.Color =
+		Color3.fromRGB(
+			160,
+			30,
+			30
+		)
+
+	local placed = false
+
+	local currentRooms =
+		Workspace:FindFirstChild(
+			"CurrentRooms"
+		)
+
+	if currentRooms
+		and roomIndex
+	then
+
+		local room =
+			currentRooms:FindFirstChild(
+				tostring(roomIndex)
+			)
+
+		if room then
+
+			local ok, pivot =
+				pcall(function()
+
+					return room:GetPivot()
+
+				end)
+
+			if ok and pivot then
+
+				p.CFrame =
+					pivot *
+					CFrame.new(
+						0,
+						1,
+						-8
+					)
+
+				placed = true
+			end
+		end
+	end
+
+	if not placed then
+
+		p.CFrame =
+			CFrame.new(
+				0,
+				5,
+				0
+			)
+	end
+
+	p.Parent = mdl
+	mdl.Parent = Workspace
+
+	Debris:AddItem(
+		mdl,
+		6
+	)
+
+	log(
+		"Placeholder spawned at Room",
+		roomIndex or "?"
+	)
+end
+
+--============================================================
+-- RANDOM ENTITY URL
+--============================================================
+
+local function getRandomEntityURL()
+
+	local available = {}
+
+	-- Không trùng entity vừa spawn
+	-- + ưu tiên entity hết cooldown
+
+	for _, url in ipairs(
+		ENTITY_URLS
+	) do
+
+		if url ~= LastSpawnedURL then
+
+			local lastTime =
+				PerURLLastSuccess[url]
+				or 0
+
+			if
+				tick() - lastTime
+				>= PER_ENTITY_COOLDOWN
+			then
+
+				table.insert(
+					available,
+					url
+				)
+
+			end
+		end
+	end
+
+	-- Nếu tất cả đang cooldown
+	-- vẫn tránh entity vừa spawn
+
+	if #available == 0 then
+
+		for _, url in ipairs(
+			ENTITY_URLS
+		) do
+
+			if url ~= LastSpawnedURL then
+
+				table.insert(
+					available,
+					url
+				)
+
+			end
+		end
+	end
+
+	-- Nếu chỉ còn 1 entity
+	if #available == 0 then
+
+		for _, url in ipairs(
+			ENTITY_URLS
+		) do
+
+			table.insert(
+				available,
+				url
+			)
+
+		end
+	end
+
+	if #available == 0 then
+		return nil
+	end
+
+	return available[
+		math.random(
+			1,
+			#available
+		)
+	]
+end
+
+--============================================================
+-- EXECUTE ENTITY SCRIPT
+--============================================================
+
+local function trySpawnFromUrl(
+	url,
+	roomNumber
+)
+
+	if not url
+		or url == ""
+	then
+
+		return false,
+			"no_url"
+	end
+
+	if ActiveEntityCount
+		>= MAX_ACTIVE_ENTITIES
+	then
+
+		return false,
+			"entity_active"
+	end
+
+	local attempt = {
+
+		url = url,
+
+		room = roomNumber,
+
+		time = tick(),
+
+		matched = false
+	}
+
+	table.insert(
+		RecentSpawnAttempts,
+		attempt
+	)
+
+	-- Cleanup attempt cũ
+
+	for i =
+		#RecentSpawnAttempts,
+		1,
+		-1
+	do
+
+		local data =
+			RecentSpawnAttempts[i]
+
+		if not data
+			or tick() -
+				data.time > 15
+		then
+
+			table.remove(
+				RecentSpawnAttempts,
+				i
+			)
+		end
+	end
+
+	local ok, body =
+		pcall(function()
+
+			return game:HttpGet(
+				url,
+				true
+			)
+
+		end)
+
+	if not ok
+		or type(body) ~= "string"
+		or #body < 8
+	then
+
+		return false,
+			"fetch_failed"
+	end
+
+	local success, runError =
+		pcall(function()
+
+			local fn =
+				loadstring(body)
+
+			if type(fn)
+				~= "function"
+			then
+
+				error(
+					"loadstring_failed"
+				)
+			end
+
+			fn()
+
+		end)
+
+	if not success then
+
+		return false,
+			"run_error:" ..
+			tostring(runError)
+	end
+
+	LastSpawnedURL = url
+	LastSpawnedName = url
+
+	PerURLLastSuccess[url] =
+		tick()
+
+	log(
+		"Entity script executed:",
+		url,
+		"| Room:",
+		roomNumber
+	)
+
+	return true,
+		"success"
+end
+
+--============================================================
+-- RANDOM ROOM SCHEDULER
+--============================================================
+
+task.spawn(function()
+
+	local LatestRoom = nil
+
+	-- Chờ LatestRoom
+
+	local waitStart =
+		tick()
+
+	while
+		tick() - waitStart < 20
+	do
+
+		local gameData =
+			RS:FindFirstChild(
+				"GameData"
+			)
+
+		if gameData then
+
+			LatestRoom =
+				gameData:FindFirstChild(
+					"LatestRoom"
+				)
+
+			if LatestRoom then
+				break
+			end
+		end
+
+		task.wait(0.25)
+	end
+
+	--========================================================
+	-- FALLBACK ROOM SCANNER
+	--========================================================
+
+	if not LatestRoom then
+
+		warnLog(
+			"LatestRoom not found, using fallback room scanner."
+		)
+
+		local roomNow =
+			getCurrentRoomNumber()
+			or 0
+
+		local nextSpawnRoom
+
+		if roomNow < START_ROOM then
+
+			nextSpawnRoom =
+				START_ROOM
+
+		else
+
+			nextSpawnRoom =
+				roomNow +
+				math.random(
+					MIN_ROOM_GAP,
+					MAX_ROOM_GAP
+				)
+		end
+
+		local lastGlobalSpawn = 0
+
+		while true do
+
+			task.wait(0.35)
+
+			roomNow =
+				getCurrentRoomNumber()
+
+			if not roomNow
+				or roomNow < START_ROOM
+			then
+
+				continue
+			end
+
+			if roomNow < nextSpawnRoom then
+				continue
+			end
+
+			ActiveEntityCount =
+				countTrackedEntities()
+
+			--================================================
+			-- ACTIVE ENTITY CHECK
+			--================================================
+
+			if
+				ActiveEntityCount
+				>= MAX_ACTIVE_ENTITIES
+			then
+
+				log(
+					"Fallback blocked:",
+					"ActiveEntityCount =",
+					ActiveEntityCount
+				)
+
+				nextSpawnRoom =
+					roomNow +
+					math.random(
+						2,
+						4
+					)
+
+				continue
+			end
+
+			--================================================
+			-- GLOBAL COOLDOWN
+			--================================================
+
+			if
+				tick() -
+				lastGlobalSpawn
+				<
+				GLOBAL_SPAWN_COOLDOWN
+			then
+
+				nextSpawnRoom =
+					roomNow +
+					math.random(
+						1,
+						3
+					)
+
+				continue
+			end
+
+			--================================================
+			-- RANDOM ENTITY
+			--================================================
+
+			local randomURL =
+				getRandomEntityURL()
+
+			local success = false
+
+			if randomURL then
+
+				local spawnSuccess,
+					reason =
+					trySpawnFromUrl(
+						randomURL,
+						roomNow
+					)
+
+				success =
+					spawnSuccess
+
+				if spawnSuccess then
+
+					lastGlobalSpawn =
+						tick()
+
+					log(
+						"SPAWN SUCCESS | ROOM",
+						roomNow
+					)
+
+				else
+
+					log(
+						"Spawn failed:",
+						tostring(reason)
+					)
+				end
+			end
+
+			--================================================
+			-- FALLBACK
+			--================================================
+
+			if not success then
+
+				spawnPlaceholder(
+					roomNow
+				)
+
+				lastGlobalSpawn =
+					tick()
+			end
+
+			--================================================
+			-- NEXT RANDOM ROOM
+			--================================================
+
+			nextSpawnRoom =
+				roomNow +
+				math.random(
+					MIN_ROOM_GAP,
+					MAX_ROOM_GAP
+				)
+
+			log(
+				"Next spawn scheduled at Room",
+				nextSpawnRoom
+			)
+		end
+
+		return
+	end
+
+	--========================================================
+	-- NORMAL LATESTROOM SCHEDULER
+	--========================================================
+
+	local currentRoom =
+		tonumber(
+			LatestRoom.Value
+		)
+		or 0
+
+	local nextSpawnRoom
+
+	-- Không spawn trước Room 8
+
+	if currentRoom < START_ROOM then
+
+		nextSpawnRoom =
+			START_ROOM
+
+	else
+
+		nextSpawnRoom =
+			currentRoom +
+			math.random(
+				MIN_ROOM_GAP,
+				MAX_ROOM_GAP
+			)
+	end
+
+	local lastProcessedRoom =
+		tonumber(
+			LatestRoom.Value
+		)
+		or 0
+
+	local lastGlobalSpawn = 0
+
+	log(
+		"===================================="
+	)
+
+	log(
+		"NEW RANDOM ENTITY SCHEDULER STARTED"
+	)
+
+	log(
+		"START ROOM:",
+		START_ROOM
+	)
+
+	log(
+		"MIN GAP:",
+		MIN_ROOM_GAP
+	)
+
+	log(
+		"MAX GAP:",
+		MAX_ROOM_GAP
+	)
+
+	log(
+		"FIRST SPAWN:",
+		nextSpawnRoom
+	)
+
+	log(
+		"===================================="
+	)
+
+	--========================================================
+	-- ROOM CHANGED
+	--========================================================
+
+	LatestRoom.Changed:Connect(
+		function(value)
+
+			local roomNow =
+				tonumber(value)
+
+			if not roomNow then
+				return
+			end
+
+			if roomNow <= lastProcessedRoom then
+				return
+			end
+
+			lastProcessedRoom =
+				roomNow
+
+			if roomNow < START_ROOM then
+				return
+			end
+
+			if roomNow < nextSpawnRoom then
+				return
+			end
+
+			ActiveEntityCount =
+				countTrackedEntities()
+
+			--================================================
+			-- ENTITY ACTIVE
+			--================================================
+
+			if
+				ActiveEntityCount
+				>= MAX_ACTIVE_ENTITIES
+			then
+
+				log(
+					"SPAWN SKIPPED:",
+					"entity still active"
+				)
+
+				nextSpawnRoom =
+					roomNow +
+					math.random(
+						2,
+						4
+					)
+
+				return
+			end
+
+			--================================================
+			-- GLOBAL COOLDOWN
+			--================================================
+
+			if
+				tick() -
+				lastGlobalSpawn
+				<
+				GLOBAL_SPAWN_COOLDOWN
+			then
+
+				log(
+					"GLOBAL COOLDOWN ACTIVE"
+				)
+
+				nextSpawnRoom =
+					roomNow +
+					math.random(
+						1,
+						3
+					)
+
+				return
+			end
+
+			--================================================
+			-- RANDOM ENTITY
+			--================================================
+
+			local randomURL =
+				getRandomEntityURL()
+
+			local spawned = false
+
+			if randomURL then
+
+				log(
+					"================================"
+				)
+
+				log(
+					"RANDOM ENTITY SELECTED"
+				)
+
+				log(
+					"ROOM:",
+					roomNow
+				)
+
+				log(
+					"URL:",
+					randomURL
+				)
+
+				log(
+					"================================"
+				)
+
+				local success,
+					reason =
+					trySpawnFromUrl(
+						randomURL,
+						roomNow
+					)
+
+				if success then
+
+					spawned = true
+
+					lastGlobalSpawn =
+						tick()
+
+					log(
+						"RANDOM ENTITY SPAWN SUCCESS!"
+					)
+
+				else
+
+					log(
+						"RANDOM ENTITY FAILED:",
+						tostring(reason)
+					)
+				end
+			end
+
+			--================================================
+			-- FALLBACK
+			--================================================
+
+			if not spawned then
+
+				log(
+					"ALL ENTITY ATTEMPTS FAILED."
+				)
+
+				log(
+					"Using placeholder."
+				)
+
+				spawnPlaceholder(
+					roomNow
+				)
+
+				lastGlobalSpawn =
+					tick()
+			end
+
+			--================================================
+			-- NEXT SPAWN
+			--================================================
+
+			local gap =
+				math.random(
+					MIN_ROOM_GAP,
+					MAX_ROOM_GAP
+				)
+
+			nextSpawnRoom =
+				roomNow + gap
+
+			log(
+				"--------------------------------"
+			)
+
+			log(
+				"NEXT RANDOM SPAWN:",
+				nextSpawnRoom
+			)
+
+			log(
+				"ROOM GAP:",
+				gap
+			)
+
+			log(
+				"--------------------------------"
+			)
+		end
+	)
+end)
+
+--============================================================
+-- FINAL
+--============================================================
+
+log(
+	"=============================================="
+)
+
+log(
+	"SUPER IMPOSSIBLE: CORRUPTED DELTA EDITION LOADED"
+)
+
+log(
+	"NEW RANDOM SPAWNER: ENABLED"
+)
+
+log(
+	"SPAWN START: ROOM",
+	START_ROOM
+)
+
+log(
+	"ROOM GAP:",
+	MIN_ROOM_GAP,
+	"-",
+	MAX_ROOM_GAP
+)
+
+log(
+	"MAX ACTIVE:",
+	MAX_ACTIVE_ENTITIES
+)
+
+log(
+	"ENTITY COUNT:",
+	#ENTITY_URLS
+)
+
+log(
+	"=============================================="
+)
